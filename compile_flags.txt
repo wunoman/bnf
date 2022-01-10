@@ -1,0 +1,6 @@
+-xc++
+-std=c++17
+-Wno-c++17-extensions
+-Wno-microsoft-template
+-Wno-switch
+-Wno-braced-scalar-init
