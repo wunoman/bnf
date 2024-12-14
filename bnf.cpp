@@ -6,15 +6,18 @@ Pool<Range> bnf::rangepool;
 //----------------------------------------------------------------------------------------------
 void bnf::print_tokens( const tokens_t &tks ) {
   printf( R"(
+--tokens.size=%llu
 tokens={
-)" );
+)", tks.size() );
 
+  size_t index = 0;
   for ( auto &tk : tks ) {
-    printf( "{%d, %lld, %lld},\n", tk.nid, tk.bi.index, tk.ei.index );
+    printf( "{%d, %lld, %lld}, --%llu\n", tk.nid, tk.bi.index, tk.ei.index, ++index );
   }
   printf( R"(
 };
 )" );
+  fflush(stdout);
 }
 
 //----------------------------------------------------------------------------------------------

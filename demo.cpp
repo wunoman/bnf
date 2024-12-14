@@ -443,7 +443,7 @@ int main( int argc, const char **argv ) {
     test_seque();
     test_bypass();
      */
-    test_alter();
+    //test_alter();
   }
 
   printf( "\n---end---\n" );

@@ -366,7 +366,7 @@ void setup_exp( bnf::Salter &exp, bnf::Sseque &functiondef, bnf::Salter **prefix
 void setup_prefixexp( bnf::Salter &prefixexp, bnf::Salter &exp, bnf::Salter &args );
 
 //----------------------------------------------------------------------------------------------
-void filter( bnf::Result &result, bnf::tokens_t &dest );
+void filter_space_comment( bnf::Result &result, bnf::tokens_t &dest );
 int parse_ast( bnf::Source_token &source, bnf::Stack<Token> &stack, bnf::Result &result,
                bnf::Parser<Token> &parser );
 // int lex( bnf::Source<uchar> &src, bnf::Stack<bnf::uchar> &stack, bnf::Result &result );

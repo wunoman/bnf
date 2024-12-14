@@ -58,6 +58,7 @@ roadmap llua::parse_file( bnf::cch *fn ) {
   auto rdm = roadmap::success;
   if ( roadmap::success == rdm ) {
     bnf::Parser<bnf::uchar> lex_parser{ lex_source, lex_stack, lex_result };
+    lex_parser.name = "lua_lex_parser";
     rdm = llua::lex( lex_parser );
     if ( roadmap::success == rdm ) {
       llua::lex_markkeyword( lex_source, lex_result );
@@ -65,9 +66,9 @@ roadmap llua::parse_file( bnf::cch *fn ) {
       lex_parser.print_matchcursor();
     }
 
-    print_result( lex_parser );
-    filter( lex_result, tokens ); // no space and comment
-    print_tokens( tokens );
+    bnf::print_result( lex_parser );
+    llua::filter_space_comment( lex_result, tokens ); // no space and comment
+    bnf::print_tokens( tokens );
   }
 
   if ( roadmap::success == rdm ) {
@@ -75,8 +76,9 @@ roadmap llua::parse_file( bnf::cch *fn ) {
     bnf::Result ast_result;
     bnf::Stack<Token> ast_stack;
     bnf::Parser<Token> ast_parser{ ast_source, ast_stack, ast_result };
+    ast_parser.name = "lua_ast_parser";
     auto rdm = llua::parse_ast( ast_source, ast_stack, ast_result, ast_parser );
-    print_result( ast_parser );
+    bnf::print_result( ast_parser );
     if ( rdm == roadmap::fail ) {
       ast_parser.print_matchcursor();
     }
@@ -486,7 +488,7 @@ bnf::Sseque &llua::create_namelist() {
 //----------------------------------------------------------------------------------------------
 // parlist ::= namelist [‘,’ ‘...’] | ‘...’
 bnf::Salter &llua::create_parlist( bnf::Sseque &namelist ) {
-  bnf::Salter astParList{ "parlist", AST_ID::nidParList };
+  bnf::Salter astParList{ "parlist", AST_ID::nidParList, 0, -1 };
   bnf::Sseque parlist_namelist{ "parlist_namelist", nidParListNameList };
   bnf::Sseque parlist_namelistoptionellipse{ "parlist_namelistoptionellipse",
                                              nidParListNameListOptionEllipse, 0, -1 };
@@ -1156,6 +1158,7 @@ bnf::Sseque &llua::create_funcbody( bnf::Salter &parlist, bnf::Sseque &block ) {
 int llua::parse_ast( bnf::Source_token &source, bnf::Stack<Token> &stack, ::Result &result,
                      bnf::Parser<Token> &parser ) {
   int ret = roadmap::fail;
+  // XXX: node is epsilon when rang_min==0
 
   // field
   // exp
@@ -1264,7 +1267,6 @@ int llua::parse_ast( bnf::Source_token &source, bnf::Stack<Token> &stack, ::Resu
   astStat( astSemiColon, astLabel, astDoEnd, astLocalNameList, astFuncCall, astBreak, astWhileDo,
            astVarListAssign, astRepeatUntil, astIfThen, astForDo, astForIn, astFunctionDefine,
            astLocalFuncDefine );
-  ////astStat( astFieldList );
 
   // chunk
   bnf::Salter chunk{ "chunk", nidChunk };
@@ -1277,7 +1279,7 @@ int llua::parse_ast( bnf::Source_token &source, bnf::Stack<Token> &stack, ::Resu
 }
 
 //----------------------------------------------------------------------------------------------
-void llua::filter( bnf::Result &result, bnf::tokens_t &dest ) {
+void llua::filter_space_comment( bnf::Result &result, bnf::tokens_t &dest ) {
   for ( auto &i : result.data ) {
     if ( NODE_ID::nid_S != i.nid && NODE_ID::nid_comment != i.nid &&
          result_type::match_content == i.type ) {

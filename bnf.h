@@ -12,6 +12,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <stdio.h>
 
 using namespace std;
 
@@ -156,8 +157,8 @@ struct Result {
 template <typename Parser> void print_result( const Parser &parser ) {
   assert( parser.pSource && parser.pStack && parser.pResult );
   printf( R"(
-bnf={
-)" );
+%s={
+)", parser.name.c_str() );
   parser.pResult->print();
   printf( R"(
 parser={
@@ -1150,18 +1151,20 @@ template <typename E> bool mark_epsilon( bnf::Node<E> *p ) {
     }
   }
 
-  // dbg( "-----------------------" );
+  printf( "--dbg-epsilon[[\n" );
   auto epsilon_count = 0;
   for ( auto &item : list ) {
     if ( item.epsilon ) {
       assert( item.pNode );
       item.pNode->epsilon = true;
-      // dbg( item.pNode->name );
+      //dbg( item.pNode->name );
       ++epsilon_count;
     }
   }
   // dbg( epsilon_count );
   //_getwch();
+  fflush(stderr);
+  printf( "--]]\n" );
 
   // dbg( "-----------------------" );
   auto undone_count = 0;
@@ -1599,7 +1602,14 @@ public:
         break;
       }
     }
-    assert( branchs_count > 0 );
+
+    // dbg 20241214
+    //if (branchs_count <= 0) {
+    //  printf("%s, candidate_list.count=%llu, branchs_count=%llu\n", name, candidate_list->size(), branchs_count);
+    //  fflush(stdout);
+    //}
+
+    ////assert( branchs_count > 0 );
     rs_branchs[0] = branchs_count; // first item is count
     return branchs_count;
   }
@@ -1663,28 +1673,38 @@ public:
     } else {
       if constexpr ( enable_delay_product ) {
         if ( delay_product_index == 0 ) {
-          // start new turn
+          // XXX: start new turn
           E elem;
           pSource->peek( elem ); // FIXME: when return is false
           candidate_count = inquiry_branchs( elem );
           candidate_count_remain = candidate_count;
-          assert( candidate_count > 0 );
+          ////assert( candidate_count > 0 );
 
           pSource->getposition( match_bi );
-          push_range_status( { match_bi } );
-          push_result_scope_begin();
+          Node::push_range_status( { match_bi } );
+          Node::push_result_scope_begin();
         }
 
-        assert( delay_product_index <= candidate_count ); // delay_product_index 从1开始
-        auto cdd_index = rs_branchs[++delay_product_index];
-        std::tie( product_bi, product_ei ) =
+        if (candidate_count == 0) {
+          if (epsilon == true) {
+            match_result_last = roadmap::bypassmatched;
+            ret = roadmap::bypassmatched;
+          } else {
+            match_result_last = roadmap::unmatched;
+            ret = roadmap::unmatched;
+          }
+        } else {
+          assert( delay_product_index <= candidate_count ); // delay_product_index 从1开始
+          auto cdd_index = rs_branchs[++delay_product_index];
+          std::tie( product_bi, product_ei ) =
             pStack->push_product( *candidate_list, node_index, cdd_index );
 
-        ret = roadmap::producted;
+          ret = roadmap::producted;
+        }
       } else {
         pSource->getposition( match_bi );
-        push_range_status( { match_bi } );
-        push_result_scope_begin();
+        Node::push_range_status( { match_bi } );
+        Node::push_result_scope_begin();
 
         std::tie( product_bi, product_ei ) = pStack->push_product( *candidate_list, node_index );
         candidate_count = candidate_list->size();
@@ -2239,6 +2259,7 @@ public:
   } // parse
 
 public:
+  string name = "bnf_parser";
   Source<E> *pSource = nullptr;
   Stack<E> *pStack = nullptr;
   Result *pResult = nullptr;
