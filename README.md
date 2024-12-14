@@ -11,7 +11,7 @@ using lexcial parse output as input, setup first and follow set and parse tokens
 BNF(EBNF) rules.
 
 ## Note
-since without left recursion check, eliminate left recursion rule before you parse it
+since without left recursion check, eliminate left recursion rule before you parse it, see more detail in lua parse examle in llua.cpp
 
 ## Demo
 + seque, alter and terminal ( implemented by functions )
